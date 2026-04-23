@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, FormEvent, KeyboardEvent } from "react";
 import Link from "next/link";
 import type { Problem } from "@/lib/problems";
+import { generateUUID } from "@/lib/uuid";
 import {
   Step,
   Answers,
@@ -36,7 +37,7 @@ export default function FocusedPractice({
   const showConstraintsUpfront = phaseId !== "requirements";
 
   const [studentName, setStudentName] = useState("");
-  const [attemptId] = useState(() => crypto.randomUUID());
+  const [attemptId] = useState(() => generateUUID());
   const [activeStep, setActiveStep] = useState<Step>(phaseSteps[0]);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [feedback, setFeedback] = useState<

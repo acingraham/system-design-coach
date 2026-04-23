@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, FormEvent, KeyboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Problem } from "@/lib/problems";
+import { generateUUID } from "@/lib/uuid";
 import {
   Step,
   Answers,
@@ -72,7 +73,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
   const isNewSession = searchParams.get("new") === "1";
 
   const [studentName, setStudentName] = useState("");
-  const [attemptId, setAttemptId] = useState(() => crypto.randomUUID());
+  const [attemptId, setAttemptId] = useState(() => generateUUID());
   const [activeStep, setActiveStep] = useState<Step>("1A");
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [feedback, setFeedback] = useState<
@@ -230,7 +231,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
   }
 
   function handleRestart() {
-    setAttemptId(crypto.randomUUID());
+    setAttemptId(generateUUID());
     setActiveStep("1A");
     setAnswers(EMPTY);
     setFeedback({});
@@ -298,7 +299,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
     setIsEditing(false);
     setShowSampleAnswer(false);
     // Reuse the loaded attempt's ID so continuing or editing stays in the same attempt
-    setAttemptId(attemptSubs[0].attempt_id || crypto.randomUUID());
+    setAttemptId(attemptSubs[0].attempt_id || generateUUID());
 
     // Navigate to the first unanswered step, or "done"
     const firstEmpty = stepOrder.find((s) => {
