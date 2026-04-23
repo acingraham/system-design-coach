@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         coachingContext += `\nReference answer should include:\n${notes.referencePoints.map((r: string) => `• ${r}`).join("\n")}`;
       }
       if (notes.outOfScope.length > 0) {
-        coachingContext += `\nOut of scope (do NOT penalize the student for failing to mention these — they would only learn what's out of scope from the interviewer. Only flag it if the student explicitly includes these as core requirements):\n${notes.outOfScope.map((o: string) => `• ${o}`).join("\n")}`;
+        coachingContext += `\nTopics the interviewer would typically place out of scope (for your reference only — do NOT penalize students for mentioning these. If a student includes them, treat it as bonus product thinking and celebrate it):\n${notes.outOfScope.map((o: string) => `• ${o}`).join("\n")}`;
       }
       if (notes.signals.length > 0) {
         coachingContext += `\nSignals to check for:\n${notes.signals.map((s: string) => `• ${s}`).join("\n")}`;
@@ -102,7 +102,7 @@ Rules:
 - Don't give credit for vague statements — "low latency" without a target is not specific
 - Keep positives to 2-4 items, suggestions to 1-3 items
 - If the answer is excellent (score 4), suggestions can be minor polish items
-- IMPORTANT: If the student includes reasonable points beyond the rubric (e.g. optional features, edge cases, out-of-scope items), this is a POSITIVE sign of product thinking. Celebrate it in the positives list. NEVER penalize, dock points, or frame extra ideas as "bloat" or "scope creep." A student who covers the core requirements AND adds thoughtful extras deserves a higher score, not a lower one. The score should be based on whether they hit the required reference points — extras only help, never hurt.
+- IMPORTANT: If the student includes reasonable points beyond the rubric (e.g. optional features, edge cases, out-of-scope items), this is a POSITIVE sign of product thinking. Celebrate it in the positives list. NEVER penalize, dock points, or frame extra ideas as "bloat", "scope creep", or "too many items." Do NOT suggest the student should have fewer requirements or should separate core from stretch — having more good ideas is always better. A student who covers the core requirements AND adds thoughtful extras deserves a higher score, not a lower one. The score should be based on whether they hit the required reference points — extras only help, never hurt.
 - Do NOT suggest the student should have asked the interviewer instead of including something. This is a practice tool, not a live interview.
 - Do NOT suggest that including additional requirements "risks misaligning priorities" or similar. In a real interview, the interviewer would simply tell them what's out of scope. Here, showing you've thought beyond the basics is a strength.
 - Do NOT give stylistic or formatting nitpicks (e.g. "use 'should be able to' instead of 'can'", bullet formatting, wording choices). Focus only on substance — what they included, what they missed, and whether their thinking is sound.
