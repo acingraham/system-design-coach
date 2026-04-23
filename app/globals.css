@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Surface colors for cards/containers */
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-2);
+  --color-border-primary: var(--border-1);
+  --color-border-secondary: var(--border-2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --bg: #ffffff;
+  --fg: #171717;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border-1: #e5e7eb;
+  --border-2: #d1d5db;
+}
+
+.dark {
+  --bg: #111111;
+  --fg: #ededed;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --border-1: #333333;
+  --border-2: #444444;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Dark mode overrides for Tailwind utility colors */
+.dark .bg-white { background-color: var(--surface) !important; }
+.dark .bg-gray-50 { background-color: var(--surface-2) !important; }
+.dark .bg-gray-100 { background-color: #262626 !important; }
+
+.dark .border-gray-200 { border-color: var(--border-1) !important; }
+.dark .border-gray-300 { border-color: var(--border-2) !important; }
+.dark .border-gray-100 { border-color: #2a2a2a !important; }
+
+/* Text */
+.dark .text-gray-900 { color: #eeeeee !important; }
+.dark .text-gray-800 { color: #dddddd !important; }
+.dark .text-gray-700 { color: #cccccc !important; }
+.dark .text-gray-600 { color: #b3b3b3 !important; }
+.dark .text-gray-500 { color: #999999 !important; }
+.dark .text-gray-400 { color: #777777 !important; }
+
+/* Active sidebar (bg-indigo-600 text-white) — keep as-is in dark mode, it looks fine */
+
+/* Buttons — bg-black no longer used as primary, but keep for safety */
+.dark .bg-black { background-color: #f5f5f5 !important; color: #111 !important; }
+.dark .bg-black:hover { background-color: #e5e5e5 !important; }
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover { background-color: var(--surface-2) !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #2a2a2a !important; }
+
+/* Feedback cards */
+.dark .bg-green-50 { background-color: #0d2418 !important; }
+.dark .border-green-200 { border-color: #1a4a3a !important; }
+.dark .text-green-700 { color: #86efac !important; }
+.dark .text-green-800 { color: #a3cfbb !important; }
+.dark .text-green-900 { color: #bbf7d0 !important; }
+.dark .bg-green-100 { background-color: #14332d !important; }
+
+.dark .bg-blue-50 { background-color: #0c1a2e !important; }
+.dark .border-blue-200 { border-color: #1e3a5f !important; }
+.dark .text-blue-700 { color: #93c5fd !important; }
+.dark .text-blue-900 { color: #bfdbfe !important; }
+
+.dark .bg-red-100 { background-color: #3b1318 !important; }
+.dark .text-red-800 { color: #fca5a5 !important; }
+
+.dark .bg-orange-100 { background-color: #3b2308 !important; }
+.dark .text-orange-800 { color: #fdba74 !important; }
+
+/* Score bar segments keep their colors in dark mode */
+
+/* Placeholder text */
+.dark .placeholder\:text-gray-400::placeholder { color: #666666 !important; }
+
+/* Focus states */
+.dark .focus\:border-gray-500:focus { border-color: #666666 !important; }
+
+/* Links */
+.dark .text-blue-600 { color: #60a5fa !important; }
+.dark .hover\:text-blue-800:hover { color: #93c5fd !important; }
+
+/* Indigo (brand color) */
+.dark .bg-indigo-600 { background-color: #6366f1 !important; }
+.dark .bg-indigo-600:hover, .dark .hover\:bg-indigo-700:hover { background-color: #818cf8 !important; }
+.dark .text-indigo-600 { color: #818cf8 !important; }
+.dark .hover\:text-indigo-700:hover { color: #a5b4fc !important; }
+.dark .text-indigo-700 { color: #818cf8 !important; }
+.dark .bg-indigo-50 { background-color: #1e1b4b !important; }
+.dark .border-indigo-200 { border-color: #3730a3 !important; }
+
+/* Select dropdowns */
+.dark select { background-color: var(--surface) !important; color: var(--fg) !important; border-color: var(--border-2) !important; }
+
+/* Textarea / input */
+.dark textarea, .dark input[type="text"] { background-color: var(--surface) !important; color: var(--fg) !important; }
