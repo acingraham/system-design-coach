@@ -28,7 +28,6 @@ export const problems: Problem[] = [
     constraints: [
       "100M daily active users",
       "1B total shortened URLs stored",
-      "100M new links created per month",
     ],
     tips: [
       "Think about how to generate short codes — random, hash-based, or counter-based each have trade-offs.",
@@ -73,7 +72,7 @@ export const problems: Problem[] = [
           "Uniqueness — each short code must map to exactly one long URL",
           "Low latency redirection (< 100ms)",
           "High availability — 99.99% uptime, availability over consistency",
-          "The read-to-write ratio is heavily skewed toward reads (~1000:1) — users access shortened URLs far more often than they create new ones. This is an insight the student should derive from the scale numbers (100M DAU but only 100M new links/month).",
+          "The read-to-write ratio is heavily skewed toward reads — users access shortened URLs far more often than they create new ones. The student should recognize this asymmetry and note that the system should be optimized for reads (caching, read replicas, etc.).",
         ],
         outOfScope: [
           "Data consistency in real-time analytics",
@@ -82,11 +81,11 @@ export const problems: Problem[] = [
         signals: [
           "Did they quantify their constraints with specific targets (not just 'low latency' or 'highly available')?",
           "Did they explicitly choose availability over consistency?",
-          "Did they derive the read-to-write ratio asymmetry from the scale numbers? (100M DAU vs 100M new links/month means reads vastly outnumber writes)",
+          "Did they recognize the read-to-write asymmetry? (Users access short URLs far more often than they create new ones — the system is heavily read-dominant)",
           "Did they mention uniqueness of short codes?",
         ],
         sampleAnswer:
-          "1. The system should ensure uniqueness for short codes — each short code maps to exactly one long URL.\n2. Redirection should occur with minimal delay (< 100ms).\n3. The system should be reliable and available 99.99% of the time (availability > consistency).\n4. The read-to-write ratio is extremely high (~1000:1) — 100M DAU accessing URLs vs. ~100M new links created per month. This will heavily impact caching strategy and database choice.",
+          "1. The system should ensure uniqueness for short codes — each short code maps to exactly one long URL.\n2. Redirection should occur with minimal delay (< 100ms).\n3. The system should be reliable and available 99.99% of the time (availability > consistency).\n4. The system is heavily read-dominant — users access shortened URLs far more often than they create new ones. This should drive decisions around caching and read optimization.",
       },
       "2": {
         referencePoints: [
@@ -99,19 +98,18 @@ export const problems: Problem[] = [
           "Analytics-related entities",
         ],
         signals: [
-          "Did they identify the core entities (Original URL, Short URL, User)?",
-          "Are the entities kept simple as a first draft (not over-engineered with every field)?",
-          "Are relationships between entities clear?",
+          "Did they identify the core entities (Original URL, Short URL, User)? Note: a single 'URL' or 'URL Mapping' entity that captures both the original and short URL is equally valid — give full credit if the student clearly understands both concepts exist, regardless of how they organize them.",
+          "Are the entities kept simple (not over-engineered with every field)?",
           "Did they avoid adding entities for out-of-scope features (analytics, click tracking)?",
         ],
         sampleAnswer:
-          "1. Original URL — the long URL that the user wants to shorten\n2. Short URL — the shortened URL that the user receives and can share (includes short code, original URL reference, optional custom alias, optional expiration date)\n3. User — represents the user who created the shortened URL",
+          "Original URL\n- url\n\nShort URL\n- short_code\n- original_url\n\nUser\n- id",
       },
       "3": {
         referencePoints: [
-          "POST /urls with { long_url, custom_alias?, expiration_date? } → { short_url }",
+          "POST /urls with { long_url } → { short_url }",
           "GET /{short_code} → HTTP 302 redirect to the original long URL",
-          "Use 302 (not 301) to maintain control over expiration and link updates",
+          "Use 302 (not 301) to maintain control over link updates",
         ],
         outOfScope: [
           "Analytics endpoints",
@@ -120,134 +118,12 @@ export const problems: Problem[] = [
         signals: [
           "Did they use correct HTTP verbs (POST to create, GET to redirect)?",
           "Did they use RESTful conventions (plural nouns for resources)?",
-          "Did they include the optional parameters (custom alias, expiration)?",
           "Did they specify the response format (returning the short URL)?",
           "Did they mention the redirect status code (302 preferred over 301)?",
           "Did they derive user identity from auth token, not the request body?",
         ],
         sampleAnswer:
-          "// Shorten a URL\nPOST /urls\n{\n  \"long_url\": \"https://www.example.com/some/very/long/url\",\n  \"custom_alias\": \"optional_custom_alias\",\n  \"expiration_date\": \"optional_expiration_date\"\n}\n→ { \"short_url\": \"http://short.ly/abc123\" }\n\n// Redirect to Original URL\nGET /{short_code}\n→ HTTP 302 Redirect to the original long URL\n\nNotes: Use 302 (not 301) so we maintain control over link expiration and updates. User identity comes from the auth token, not the request body.",
-      },
-    },
-  },
-  {
-    id: "chat-app",
-    title: "Chat App",
-    description:
-      "Design a real-time messaging system supporting one-on-one and group conversations with delivery and read receipts.",
-    constraints: [
-      "Billions of total users, ~200M concurrent connections",
-      "Messages must appear in real time (< 500ms)",
-      "Group chats up to 100 members",
-      "~40K messages/second, ~100K writes/second including inbox entries",
-      "Offline users should receive messages when they come back online (up to 30 days)",
-    ],
-    tips: [
-      "Persistent connections (WebSocket) vs. polling — what fits real-time delivery?",
-      "Think about message ordering, especially in group chats with concurrent senders.",
-      "Where does message history live, and how do you handle offline users coming back online?",
-    ],
-    coachingNotes: {
-      "1A": {
-        referencePoints: [
-          "Users should be able to start group chats with multiple participants (limit 100)",
-          "Users should be able to send/receive messages",
-          "Users should be able to receive messages sent while they are not online (up to 30 days)",
-          "Users should be able to send/receive media in their messages",
-        ],
-        outOfScope: [
-          "Audio/video calling",
-          "Interactions with businesses",
-          "Registration and profile management",
-        ],
-        signals: [
-          "Did they keep it focused to 3-4 core requirements?",
-          "Did they identify the must-haves: send/receive messages + group chats?",
-          "Did they mention offline message delivery? This is a non-obvious but important requirement.",
-          "Did they mention media support?",
-        ],
-        sampleAnswer:
-          "Core Requirements:\n1. Users should be able to start group chats with multiple participants (limit 100).\n2. Users should be able to send/receive messages.\n3. Users should be able to receive messages sent while they are not online (up to 30 days).\n4. Users should be able to send/receive media in their messages.\n\nBelow the line (out of scope):\n- Audio/video calling.\n- Interactions with businesses.\n- Registration and profile management.",
-      },
-      "1B": {
-        referencePoints: [
-          "Ask about the number of users and concurrent connections",
-          "The goal is to understand the scale of message throughput and connection management",
-        ],
-        outOfScope: [
-          "Detailed storage calculations — save for later",
-        ],
-        signals: [
-          "Is the question specific and measurable?",
-          "Does it target the number of users or concurrent connections?",
-          "Would the answer help them understand infrastructure needs for real-time messaging?",
-        ],
-        sampleAnswer:
-          "How many total users should we support, and how many do we expect to be connected simultaneously?",
-      },
-      "1C": {
-        referencePoints: [
-          "Low latency delivery — messages should arrive in < 500ms",
-          "Guaranteed deliverability — messages must eventually reach the recipient",
-          "Handle billions of users with high throughput",
-          "Messages stored on centralized servers no longer than necessary (privacy)",
-          "System should be resilient against failures of individual components",
-        ],
-        outOfScope: [
-          "Exhaustive treatment of security concerns",
-          "Spam and scraping prevention systems",
-        ],
-        signals: [
-          "Did they specify a latency target for message delivery?",
-          "Did they mention guaranteed delivery / durability of messages?",
-          "Did they think about what happens when components fail?",
-          "Did they consider privacy implications of message storage?",
-        ],
-        sampleAnswer:
-          "1. Messages should be delivered to available users with low latency (< 500ms).\n2. We should guarantee deliverability of messages — they should eventually reach the recipient.\n3. The system should handle billions of users with high throughput (~40K messages/sec).\n4. Messages should be stored on centralized servers no longer than necessary.\n5. The system should be resilient against failures of individual components.",
-      },
-      "2": {
-        referencePoints: [
-          "Users — represents a person using the system",
-          "Chats — a conversation between 2-100 users",
-          "Messages — the content sent within a chat",
-          "Clients — a user might have multiple devices (phone, desktop, tablet)",
-        ],
-        outOfScope: [
-          "Detailed column definitions at this stage",
-          "Media/attachment entity details",
-        ],
-        signals: [
-          "Did they identify Users, Chats, and Messages as core entities?",
-          "Did they consider that a user can have multiple devices (Clients)?",
-          "Did they note that Chats can have 2-100 participants?",
-          "Are relationships between entities clear?",
-        ],
-        sampleAnswer:
-          "1. Users — represents a person using the system\n2. Chats — a conversation between 2-100 users\n3. Messages — the content sent within a chat (text, media references)\n4. Clients — a user might have multiple devices (phone, desktop, tablet)",
-      },
-      "3": {
-        referencePoints: [
-          "This is a WebSocket-based system, not REST — real-time bidirectional communication",
-          "createChat: { participants[], name } → { chatId }",
-          "sendMessage: { chatId, message, attachments } → { status, messageId }",
-          "createAttachment: { body, hash } → { attachmentId }",
-          "modifyChatParticipants: { chatId, userId, operation: ADD|REMOVE } → { status }",
-          "Server pushes: chatUpdate, newMessage events to connected clients",
-          "Clients send ack (acknowledgement) upon receipt to confirm delivery",
-        ],
-        outOfScope: [
-          "Push notification endpoints",
-          "User management/auth endpoints",
-        ],
-        signals: [
-          "Did they recognize that WebSocket (or similar persistent connection) is needed instead of REST?",
-          "Did they define commands for both sending and receiving (bidirectional)?",
-          "Did they include message acknowledgement (ack) for delivery confirmation?",
-          "Did they handle media/attachments as a separate concern from text messages?",
-        ],
-        sampleAnswer:
-          "// WebSocket-based API (bidirectional commands)\n\n// Client → Server:\ncreateChat: { participants[], name } → { chatId }\nsendMessage: { chatId, message, attachments } → { status: SUCCESS|FAILURE, messageId }\ncreateAttachment: { body, hash } → { attachmentId }\nmodifyChatParticipants: { chatId, userId, operation: ADD|REMOVE } → { status }\n\n// Server → Client:\nchatUpdate: { chatId, participants[] } → client sends ack\nnewMessage: { chatId, userId, message, attachments } → client sends ack\n\nNotes: Use WebSockets (over TLS) for real-time bidirectional communication. Client acknowledgement (ack) is crucial for guaranteeing delivery — if no ack is received, the message stays in the user's inbox for later delivery.",
+          "// Shorten a URL\nPOST /urls\n{\n  \"long_url\": \"https://www.example.com/some/very/long/url\"\n}\n→ { \"short_url\": \"http://short.ly/abc123\" }\n\n// Redirect to Original URL\nGET /{short_code}\n→ HTTP 302 Redirect to the original long URL\n\nNotes: Use 302 (not 301) so we maintain control over link updates. User identity comes from the auth token, not the request body.",
       },
     },
   },
@@ -347,7 +223,7 @@ export const problems: Problem[] = [
           "Did they avoid adding entities for out-of-scope features?",
         ],
         sampleAnswer:
-          "1. User — represents a person on the platform (id, username, bio)\n2. Follow — a uni-directional relationship: follower → followee (followerId, followeeId)\n3. Post — content created by a user (id, authorId, content, createdAt)",
+          "User\n- id\n\nFollow\n- follower_id\n- followee_id\n\nPost\n- id\n- author_id\n- content",
       },
       "3": {
         referencePoints: [
@@ -370,6 +246,127 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "// Create a post\nPOST /posts\n{ \"content\": \"...\" }\n→ { \"postId\": \"...\" }\n\n// Follow a user (idempotent)\nPUT /users/:id/follow\n→ 200 OK\n\n// Unfollow (out of scope but noting for completeness)\nDELETE /users/:id/follow\n→ 200 OK\n\n// View feed with cursor-based pagination\nGET /feed?pageSize={size}&cursor={timestamp}\n→ { items: Post[], nextCursor: string }\n\nNotes: Use cursor-based pagination (timestamp cursor) so each page returns posts older than the cursor. Auth via JWT in header. PUT for follow because it's idempotent — clicking follow twice doesn't create duplicate records.",
+      },
+    },
+  },
+  {
+    id: "chat-app",
+    title: "Chat App",
+    description:
+      "Design a real-time messaging system supporting one-on-one and group conversations with delivery and read receipts.",
+    constraints: [
+      "Billions of total users, ~200M concurrent connections",
+      "Messages must appear in real time (< 500ms)",
+      "Group chats up to 100 members",
+      "~40K messages/second, ~100K writes/second including inbox entries",
+      "Offline users should receive messages when they come back online (up to 30 days)",
+    ],
+    tips: [
+      "Persistent connections (WebSocket) vs. polling — what fits real-time delivery?",
+      "Think about message ordering, especially in group chats with concurrent senders.",
+      "Where does message history live, and how do you handle offline users coming back online?",
+    ],
+    coachingNotes: {
+      "1A": {
+        referencePoints: [
+          "Users should be able to start group chats with multiple participants (limit 100)",
+          "Users should be able to send/receive messages",
+          "Users should be able to receive messages sent while they are not online (up to 30 days)",
+          "Users should be able to send/receive media in their messages",
+        ],
+        outOfScope: [
+          "Audio/video calling",
+          "Interactions with businesses",
+          "Registration and profile management",
+        ],
+        signals: [
+          "Did they keep it focused to 3-4 core requirements?",
+          "Did they identify the must-haves: send/receive messages + group chats?",
+          "Did they mention offline message delivery? This is a non-obvious but important requirement.",
+          "Did they mention media support?",
+        ],
+        sampleAnswer:
+          "Core Requirements:\n1. Users should be able to start group chats with multiple participants (limit 100).\n2. Users should be able to send/receive messages.\n3. Users should be able to receive messages sent while they are not online (up to 30 days).\n4. Users should be able to send/receive media in their messages.\n\nBelow the line (out of scope):\n- Audio/video calling.\n- Interactions with businesses.\n- Registration and profile management.",
+      },
+      "1B": {
+        referencePoints: [
+          "Ask about the number of users and concurrent connections",
+          "The goal is to understand the scale of message throughput and connection management",
+        ],
+        outOfScope: [
+          "Detailed storage calculations — save for later",
+        ],
+        signals: [
+          "Is the question specific and measurable?",
+          "Does it target the number of users or concurrent connections?",
+          "Would the answer help them understand infrastructure needs for real-time messaging?",
+        ],
+        sampleAnswer:
+          "How many total users should we support, and how many do we expect to be connected simultaneously?",
+      },
+      "1C": {
+        referencePoints: [
+          "Low latency delivery — messages should arrive in < 500ms",
+          "Guaranteed deliverability — messages must eventually reach the recipient",
+          "Handle billions of users with high throughput",
+          "Messages stored on centralized servers no longer than necessary (privacy)",
+          "System should be resilient against failures of individual components",
+        ],
+        outOfScope: [
+          "Exhaustive treatment of security concerns",
+          "Spam and scraping prevention systems",
+        ],
+        signals: [
+          "Did they specify a latency target for message delivery?",
+          "Did they mention guaranteed delivery / durability of messages?",
+          "Did they think about what happens when components fail?",
+          "Did they consider privacy implications of message storage?",
+        ],
+        sampleAnswer:
+          "1. Messages should be delivered to available users with low latency (< 500ms).\n2. We should guarantee deliverability of messages — they should eventually reach the recipient.\n3. The system should handle billions of users with high throughput (~40K messages/sec).\n4. Messages should be stored on centralized servers no longer than necessary.\n5. The system should be resilient against failures of individual components.",
+      },
+      "2": {
+        referencePoints: [
+          "Users — represents a person using the system",
+          "Chats — a conversation between 2-100 users",
+          "Messages — the content sent within a chat",
+          "Clients — a user might have multiple devices (phone, desktop, tablet)",
+        ],
+        outOfScope: [
+          "Detailed column definitions at this stage",
+          "Media/attachment entity details",
+        ],
+        signals: [
+          "Did they identify Users, Chats, and Messages as core entities?",
+          "Did they consider that a user can have multiple devices (Clients)?",
+          "Did they note that Chats can have 2-100 participants?",
+          "Are the entities kept simple (not over-engineered)?",
+        ],
+        sampleAnswer:
+          "User\n- id\n\nChat\n- id\n- participants\n\nMessage\n- id\n- chat_id\n- sender_id\n- content\n\nClient\n- id\n- user_id",
+      },
+      "3": {
+        referencePoints: [
+          "This is a WebSocket-based system, not REST — real-time bidirectional communication",
+          "createChat: { participants[], name } → { chatId }",
+          "sendMessage: { chatId, message, attachments } → { status, messageId }",
+          "createAttachment: { body, hash } → { attachmentId }",
+          "modifyChatParticipants: { chatId, userId, operation: ADD|REMOVE } → { status }",
+          "Server pushes: chatUpdate, newMessage events to connected clients",
+          "Clients send ack (acknowledgement) upon receipt to confirm delivery",
+        ],
+        outOfScope: [
+          "Push notification endpoints",
+          "User management/auth endpoints",
+        ],
+        signals: [
+          "Did they recognize that WebSocket (or similar persistent connection) is needed instead of REST?",
+          "Did they define commands for both sending and receiving (bidirectional)?",
+          "Did they include message acknowledgement (ack) for delivery confirmation?",
+          "Did they handle media/attachments as a separate concern from text messages?",
+        ],
+        sampleAnswer:
+          "// WebSocket-based API (bidirectional commands)\n\n// Client → Server:\ncreateChat: { participants[], name } → { chatId }\nsendMessage: { chatId, message, attachments } → { status: SUCCESS|FAILURE, messageId }\ncreateAttachment: { body, hash } → { attachmentId }\nmodifyChatParticipants: { chatId, userId, operation: ADD|REMOVE } → { status }\n\n// Server → Client:\nchatUpdate: { chatId, participants[] } → client sends ack\nnewMessage: { chatId, userId, message, attachments } → client sends ack\n\nNotes: Use WebSockets (over TLS) for real-time bidirectional communication. Client acknowledgement (ack) is crucial for guaranteeing delivery — if no ack is received, the message stays in the user's inbox for later delivery.",
       },
     },
   },
@@ -470,7 +467,7 @@ export const problems: Problem[] = [
           "Did they think about the state transitions of a Ride (requested → matched → in-progress → completed)?",
         ],
         sampleAnswer:
-          "1. Rider — a user who requests rides (id, name, payment methods)\n2. Driver — a user who provides rides (id, name, vehicle info, availability status)\n3. Fare — estimated fare for a potential ride (id, pickup location, destination, estimated fare, ETA)\n4. Ride — an individual ride (id, riderId, driverId, fareId, state, planned route, actual fare, pickup/dropoff timestamps)\n5. Location — real-time driver location (driverId, lat, lng, lastUpdated)",
+          "Rider\n- id\n\nDriver\n- id\n- vehicle_info\n- availability_status\n\nFare\n- id\n- pickup_location\n- destination\n- estimated_fare\n\nRide\n- id\n- rider_id\n- driver_id\n- fare_id\n- status\n\nLocation\n- driver_id\n- lat\n- lng",
       },
       "3": {
         referencePoints: [

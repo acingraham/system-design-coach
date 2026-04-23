@@ -66,7 +66,7 @@ export const STEPS: Record<Exclude<Step, "done">, StepConfig> = {
     next: "3",
     cta: "Continue",
     placeholder:
-      "One entity per line with its key fields. For example:\n- User: id, username, bio\n- Photo: id, authorId, url, createdAt\n- Like: userId, photoId",
+      "List the core entities and their attributes. For example:\n\nUser\n- id\n- username\n\nPhoto\n- id\n- author_id\n- url",
   },
   "3": {
     sidebarLabel: "API Design",
@@ -122,7 +122,7 @@ export function getPhaseById(phaseId: string): Phase | undefined {
 // --- Scale question validation ---
 
 const SCALE_KEYWORDS_REGEX =
-  /\b(users?|dau|mau|wau|active|traffic|requests?|scale|load|volume|concurrent|peak|throughput|qps|rps|rate|bandwidth|growth|reads?|writes?|ratio|latency|storage)\b/i;
+  /\b(users?|dau|mau|wau|active|traffic|requests?|scale|load|volume|concurrent|peak|throughput|qps|rps|rate|bandwidth|growth|reads?|writes?|ratio|latency|storage|urls?|links?|messages?|posts?|items?|records?|entries|data|connections?|drivers?|riders?|rides?|chats?|followers?|capacity|size|million|billion|100m|1b)\b/i;
 
 export function isMeaningfulScaleQuestion(text: string): boolean {
   return SCALE_KEYWORDS_REGEX.test(text);

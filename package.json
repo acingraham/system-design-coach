@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:feedback": "npx tsx scripts/test-feedback.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
