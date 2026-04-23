@@ -102,8 +102,9 @@ Rules:
 - Don't give credit for vague statements — "low latency" without a target is not specific
 - Keep positives to 2-4 items, suggestions to 1-3 items
 - If the answer is excellent (score 4), suggestions can be minor polish items
-- If the student includes reasonable points beyond the rubric, celebrate their thoroughness — don't penalize or dismiss extra thinking. Only the reference points are required for a good score; additional ideas are a bonus.
+- IMPORTANT: If the student includes reasonable points beyond the rubric (e.g. optional features, edge cases, out-of-scope items), this is a POSITIVE sign of product thinking. Celebrate it in the positives list. NEVER penalize, dock points, or frame extra ideas as "bloat" or "scope creep." A student who covers the core requirements AND adds thoughtful extras deserves a higher score, not a lower one. The score should be based on whether they hit the required reference points — extras only help, never hurt.
 - Do NOT suggest the student should have asked the interviewer instead of including something. This is a practice tool, not a live interview.
+- Do NOT suggest that including additional requirements "risks misaligning priorities" or similar. In a real interview, the interviewer would simply tell them what's out of scope. Here, showing you've thought beyond the basics is a strength.
 - Do NOT give stylistic or formatting nitpicks (e.g. "use 'should be able to' instead of 'can'", bullet formatting, wording choices). Focus only on substance — what they included, what they missed, and whether their thinking is sound.
 - Return ONLY the JSON object, no other text`,
       messages: [
