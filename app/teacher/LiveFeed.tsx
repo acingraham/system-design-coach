@@ -60,6 +60,8 @@ export default function LiveFeed() {
   const [filterProblem, setFilterProblem] = useState("");
   const [filterStep, setFilterStep] = useState("");
   const [filterTime, setFilterTime] = useState("");
+  const [filterStudents, setFilterStudents] = useState<Set<string>>(new Set());
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(() => {
     if (typeof window !== "undefined" && window.location.hash) {
       const id = parseInt(window.location.hash.slice(1), 10);
@@ -117,9 +119,28 @@ export default function LiveFeed() {
     { label: "Today", minutes: 24 * 60 },
   ];
 
+  // Derive unique student names from all submissions, sorted alphabetically
+  const studentNames = Array.from(
+    new Set(submissions.map((s) => s.student_name))
+  ).sort((a, b) => a.localeCompare(b));
+
+  function toggleStudent(name: string) {
+    setFilterStudents((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
+
   const filtered = submissions.filter((s) => {
     if (filterProblem && s.problem_title !== filterProblem) return false;
     if (filterStep && s.step_label !== filterStep) return false;
+    if (filterStudents.size > 0 && !filterStudents.has(s.student_name))
+      return false;
     if (filterTime) {
       const minutes = parseInt(filterTime, 10);
       const cutoff = new Date(Date.now() - minutes * 60 * 1000);
@@ -171,6 +192,65 @@ export default function LiveFeed() {
             </option>
           ))}
         </select>
+
+        {/* Student multi-select dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setStudentDropdownOpen((o) => !o)}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-left min-w-[140px] flex items-center justify-between gap-2"
+          >
+            <span className={filterStudents.size === 0 ? "text-gray-900" : "text-gray-900"}>
+              {filterStudents.size === 0
+                ? "All students"
+                : filterStudents.size === 1
+                  ? Array.from(filterStudents)[0]
+                  : `${filterStudents.size} students`}
+            </span>
+            <span className="text-xs text-gray-400">▾</span>
+          </button>
+          {studentDropdownOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setStudentDropdownOpen(false)}
+              />
+              <div className="absolute top-full left-0 z-20 mt-1 w-56 rounded-lg border border-gray-200 bg-white shadow-lg py-1 max-h-64 overflow-y-auto">
+                {filterStudents.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterStudents(new Set());
+                      setStudentDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-xs text-indigo-600 hover:bg-gray-50 border-b border-gray-100"
+                  >
+                    Clear selection
+                  </button>
+                )}
+                {studentNames.map((name) => (
+                  <label
+                    key={name}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filterStudents.has(name)}
+                      onChange={() => toggleStudent(name)}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-gray-800">{name}</span>
+                  </label>
+                ))}
+                {studentNames.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-gray-400">
+                    No students yet
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         <span className="text-xs text-gray-400">
           {filtered.length} submission{filtered.length !== 1 ? "s" : ""} · Last
