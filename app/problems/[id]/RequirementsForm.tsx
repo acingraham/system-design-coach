@@ -84,7 +84,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const [showSampleAnswer, setShowSampleAnswer] = useState(false);
-  const [tipsOpen, setTipsOpen] = useState(false);
+  const [tipsOpen, setTipsOpen] = useState(true);
   const [pastSubmissions, setPastSubmissions] = useState<PastSubmission[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedPastId, setExpandedPastId] = useState<number | null>(null);
@@ -687,9 +687,41 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
                   </div>
                 )}
 
-                {!isLoadingFeedback && activeStep !== "done" && feedback[activeStep] && (
-                  <FeedbackCard feedback={feedback[activeStep]} />
-                )}
+                {!isLoadingFeedback && activeStep !== "done" && feedback[activeStep] && (() => {
+                  // Build score trajectory for this step from past submissions
+                  const stepScores = pastSubmissions
+                    .filter((s) => s.step === activeStep)
+                    .reverse() // chronological order
+                    .map((s) => {
+                      try {
+                        const parsed = JSON.parse(s.feedback);
+                        return parsed?.score ? Math.round(parsed.score) : null;
+                      } catch { return null; }
+                    })
+                    .filter((s): s is number => s !== null);
+                  // Add current score
+                  const currentScore = Math.round(feedback[activeStep]!.score);
+                  const allScores = [...stepScores, currentScore];
+
+                  return (
+                    <>
+                      {allScores.length > 1 && (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <span className="font-medium">Attempts:</span>
+                          {allScores.map((s, i) => (
+                            <span key={i} className="flex items-center gap-1">
+                              {i > 0 && <span className="text-gray-300">&rarr;</span>}
+                              <span className={`font-semibold ${
+                                s >= 3 ? "text-green-600" : s >= 2 ? "text-orange-500" : "text-red-500"
+                              }`}>{s}/4</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <FeedbackCard feedback={feedback[activeStep]} />
+                    </>
+                  );
+                })()}
 
                 {!isLoadingFeedback &&
                   activeStep !== "done" &&
@@ -718,26 +750,53 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
                     </div>
                   )}
 
-                {!isLoadingFeedback && (
-                  <div className="flex items-center gap-3">
-                    {isStepAnswered(activeStep) && (
-                      <button
-                        type="button"
-                        onClick={handleContinue}
-                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
-                      >
-                        {current.next === "done" ? "Finish" : "Continue"}
-                      </button>
-                    )}
+                {!isLoadingFeedback && (() => {
+                  const stepFeedback = activeStep !== "done" ? feedback[activeStep] : undefined;
+                  const score = stepFeedback?.score ?? 0;
+                  const lowScore = score > 0 && score < 3;
+
+                  const editButton = (
                     <button
                       type="button"
                       onClick={startEditing}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className={lowScore
+                        ? "rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                        : "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      }
                     >
-                      {isStepAnswered(activeStep) ? "Edit" : "Try Again"}
+                      {lowScore ? "Edit & Improve" : isStepAnswered(activeStep) ? "Edit" : "Try Again"}
                     </button>
-                  </div>
-                )}
+                  );
+
+                  const continueButton = isStepAnswered(activeStep) ? (
+                    <button
+                      type="button"
+                      onClick={handleContinue}
+                      className={lowScore
+                        ? "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                        : "rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                      }
+                    >
+                      {current.next === "done" ? "Finish" : "Continue"}
+                    </button>
+                  ) : null;
+
+                  return (
+                    <div className="flex items-center gap-3">
+                      {lowScore ? (
+                        <>
+                          {editButton}
+                          {continueButton}
+                        </>
+                      ) : (
+                        <>
+                          {continueButton}
+                          {editButton}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </section>

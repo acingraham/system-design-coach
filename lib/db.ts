@@ -115,6 +115,19 @@ export function getSubmissionsBySession(sessionId: string): Submission[] {
     .all(sessionId) as Submission[];
 }
 
+export function getPreviousSubmission(
+  sessionId: string,
+  problemId: string,
+  step: string
+): Submission | undefined {
+  const db = getDb();
+  return db
+    .prepare(
+      `SELECT * FROM submissions WHERE session_id = ? AND problem_id = ? AND step = ? ORDER BY created_at DESC LIMIT 1`
+    )
+    .get(sessionId, problemId, step) as Submission | undefined;
+}
+
 export function getSubmissionsBySessionAndProblem(
   sessionId: string,
   problemId: string

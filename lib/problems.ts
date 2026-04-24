@@ -56,9 +56,7 @@ export const problems: Problem[] = [
           "Ask about the scale of the system — number of DAU, total URLs, expected growth",
           "The goal is to understand whether this is a small, medium, or large-scale system",
         ],
-        outOfScope: [
-          "Read/write ratio — this is an architectural insight the student should derive themselves in the nonfunctional requirements step, not something to ask the interviewer",
-        ],
+        outOfScope: [],
         signals: [
           "Is the question specific and measurable (not vague like 'how big is it?')?",
           "Does it target the size/scale of the system (DAU, total stored items, expected growth)?",

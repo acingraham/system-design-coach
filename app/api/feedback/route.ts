@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { saveSubmission } from "@/lib/db";
+import { saveSubmission, getPreviousSubmission } from "@/lib/db";
 import { getProblem } from "@/lib/problems";
 import { anonymousName } from "@/lib/anonymousName";
 
@@ -8,9 +8,11 @@ const client = new Anthropic();
 
 const STEP_INSTRUCTIONS: Record<string, string> = {
   "1A": `The student is listing functional requirements — what the system should do from a user's perspective.
-Evaluate: Are the requirements specific and actionable? Did they identify the core features? Did they keep it focused (2-3 core requirements, not a long list)? Did they appropriately scope out non-core features?`,
+Evaluate: Are the requirements specific and actionable? Did they identify the core features? Did they keep it focused (2-3 core requirements, not a long list)? Did they appropriately scope out non-core features?
+Hint for evaluation: most systems have both a "create" and a "use/consume" flow (e.g. creating a short URL AND redirecting via it, posting a message AND viewing a feed). Check whether the student covered both sides.`,
   "1B": `The student is asking a clarifying question about the scale of the system.
-Evaluate: Is the question specific and measurable? Does it target a dimension that would change the design (DAU, read/write ratio, total stored items, latency targets)? Would the answer meaningfully impact architecture decisions?`,
+Evaluate: Is the question specific and measurable? Does it target a dimension that would change the design (DAU, read/write ratio, total stored items, latency targets)? Would the answer meaningfully impact architecture decisions?
+IMPORTANT: Asking additional thoughtful questions beyond the primary scale question (e.g. read/write ratio, geographic distribution, growth projections) should NEVER lower the score — these demonstrate deeper architectural thinking. A single well-targeted DAU question is a 3; bonus questions that would meaningfully shape architecture push it to 4.`,
   "1C": `The student is identifying nonfunctional requirements — constraints like latency, availability, consistency, durability, etc.
 Evaluate: Did they quantify their constraints with specific targets (not just "low latency")? Did they make explicit trade-offs (e.g. availability vs consistency)? Did they identify scale-related constraints?`,
   "2": `The student is identifying core entities (data models) in the system.
@@ -78,6 +80,26 @@ export async function POST(request: NextRequest) {
       coachingContext += "\n--- END RUBRIC ---";
     }
 
+    // Look up previous submission for retry-aware feedback
+    const sessionId = request.cookies.get("session_id")?.value || "";
+    let previousAttemptContext = "";
+    if (sessionId) {
+      const prev = getPreviousSubmission(sessionId, problemId, step);
+      if (prev) {
+        try {
+          const prevFeedback = JSON.parse(prev.feedback);
+          previousAttemptContext = `\n\n--- PREVIOUS ATTEMPT (acknowledge improvements) ---
+Previous answer: ${prev.answer}
+Previous score: ${prevFeedback.score}/4
+Previous suggestions: ${prevFeedback.suggestions?.join("; ") || "none"}
+---
+This is a retry. Acknowledge specific improvements the student made since their last attempt. Be explicit about what's still missing.`;
+        } catch {
+          // If feedback parsing fails, skip previous context
+        }
+      }
+    }
+
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 600,
@@ -92,10 +114,12 @@ Return your evaluation as a JSON object with this exact structure:
 }
 
 Scoring guide:
-- 1: Missing most key points, fundamentally incomplete
+- 1: Truly sparse (1 item) or completely off-topic
 - 2: Has some right ideas but missing important elements or too vague
 - 3: Good answer covering most key points with minor gaps
 - 4: Excellent answer hitting all key signals, well-structured and specific
+
+Important scoring floor: A student who lists 3+ relevant items for a step should never score below 2, even if they haven't hit the specific rubric signals. Reserve score 1 for answers that have only 1 item or are fundamentally off-topic.
 
 Tone:
 - Be encouraging, especially for lower scores. These are students learning — frame gaps as opportunities, not failures.
@@ -105,8 +129,9 @@ Tone:
 Rules:
 - Each positive/suggestion must reference something specific from the student's answer or the rubric
 - Don't give credit for vague statements — "low latency" without a target is not specific
-- Keep positives to 2-4 items, suggestions to 1-3 items
-- If the answer is excellent (score 4), suggestions can be minor polish items
+- Keep positives to 2-4 items, suggestions to 0-3 items
+- If the answer is excellent (score 4), instead of filler suggestions, point forward to how this step connects to the next phase (e.g. "In Core Entities, think about how the read-heavy pattern you identified will influence your data model"). If there's nothing meaningful to suggest, use 0 suggestions rather than forcing weak ones.
+- Do NOT suggest something the student already included in their answer. Read the answer carefully before writing suggestions.
 - IMPORTANT: If the student includes reasonable points beyond the rubric (e.g. optional features, edge cases, out-of-scope items), this is a POSITIVE sign of product thinking. Celebrate it in the positives list. NEVER penalize, dock points, or frame extra ideas as "bloat", "scope creep", or "too many items." Do NOT suggest the student should have fewer requirements or should separate core from stretch — having more good ideas is always better. A student who covers the core requirements AND adds thoughtful extras deserves a higher score, not a lower one. The score should be based on whether they hit the required reference points — extras only help, never hurt.
 - Do NOT suggest "organizing", "labeling", "distinguishing", or "separating" core requirements from nice-to-haves, stretch goals, or extras. The student's job is to think of good ideas — categorization is not a signal we evaluate.
 - Do NOT suggest the student should have asked the interviewer instead of including something. This is a practice tool, not a live interview.
@@ -120,7 +145,7 @@ Rules:
           content: `Problem: ${problemTitle}
 ${problemDescription}${constraintsContext}
 
-Step: ${stepInstruction}${coachingContext}
+Step: ${stepInstruction}${coachingContext}${previousAttemptContext}
 
 Student's answer:
 ${answer}
@@ -149,7 +174,6 @@ Evaluate this answer and return JSON.`,
     }
 
     // Save to database
-    const sessionId = request.cookies.get("session_id")?.value || "";
     saveSubmission({
       sessionId,
       attemptId: attemptId || "",
