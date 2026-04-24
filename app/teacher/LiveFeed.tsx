@@ -62,6 +62,7 @@ export default function LiveFeed() {
   const [filterTime, setFilterTime] = useState("");
   const [filterStudents, setFilterStudents] = useState<Set<string>>(new Set());
   const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"feed" | "summary">("feed");
   const [expandedId, setExpandedId] = useState<number | null>(() => {
     if (typeof window !== "undefined" && window.location.hash) {
       const id = parseInt(window.location.hash.slice(1), 10);
@@ -256,10 +257,154 @@ export default function LiveFeed() {
           {filtered.length} submission{filtered.length !== 1 ? "s" : ""} · Last
           updated {lastUpdate}
         </span>
+
+        {/* View toggle */}
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden ml-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode("feed")}
+            className={`px-3 py-1.5 text-xs font-medium ${
+              viewMode === "feed"
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Feed
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("summary")}
+            className={`px-3 py-1.5 text-xs font-medium border-l border-gray-300 ${
+              viewMode === "summary"
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Summary
+          </button>
+        </div>
       </div>
 
-      {/* Submissions */}
-      {filtered.length === 0 ? (
+      {/* Summary View */}
+      {viewMode === "summary" && (() => {
+        // Build per-student, per-problem, per-step summary from filtered submissions
+        type StepSummary = { latestScore: number; attempts: number };
+        type ProblemSummary = Record<string, StepSummary>;
+        type StudentSummary = { problems: Record<string, ProblemSummary> };
+
+        const summaryMap: Record<string, StudentSummary> = {};
+
+        for (const s of filtered) {
+          if (!summaryMap[s.student_name]) {
+            summaryMap[s.student_name] = { problems: {} };
+          }
+          const student = summaryMap[s.student_name];
+          if (!student.problems[s.problem_title]) {
+            student.problems[s.problem_title] = {};
+          }
+          const prob = student.problems[s.problem_title];
+          if (!prob[s.step_label]) {
+            prob[s.step_label] = { latestScore: 0, attempts: 0 };
+          }
+          prob[s.step_label].attempts += 1;
+          // Submissions are newest-first, so first encounter is the latest
+          if (prob[s.step_label].latestScore === 0) {
+            const fb = parseFeedback(s.feedback);
+            if (fb) {
+              prob[s.step_label].latestScore = Math.max(1, Math.min(4, Math.round(fb.score)));
+            }
+          }
+        }
+
+        const studentNamesSorted = Object.keys(summaryMap).sort((a, b) =>
+          a.localeCompare(b)
+        );
+
+        // Determine which problems appear in the filtered data
+        const problemsInView = Array.from(new Set(filtered.map((s) => s.problem_title)));
+
+        if (studentNamesSorted.length === 0) {
+          return (
+            <div className="rounded-lg border border-gray-200 p-8 text-center text-sm text-gray-500">
+              No submissions yet. Waiting for students...
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            {studentNamesSorted.map((name) => {
+              const student = summaryMap[name];
+              return (
+                <div
+                  key={name}
+                  className="rounded-xl border border-gray-200 bg-white shadow-sm p-4"
+                >
+                  <div className="text-sm font-semibold text-gray-900 mb-3">
+                    {name}
+                  </div>
+                  {problemsInView.map((prob) => {
+                    const steps = student.problems[prob];
+                    if (!steps) return null;
+                    return (
+                      <div key={prob} className="mb-3 last:mb-0">
+                        <div className="text-xs text-gray-500 mb-1.5">{prob}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {ALL_STEPS.map((stepLabel) => {
+                            const info = steps[stepLabel];
+                            // Abbreviate step labels
+                            const abbrev: Record<string, string> = {
+                              "Functional Requirements": "FR",
+                              "Scale Question": "Scale",
+                              "Nonfunctional Requirements": "NFR",
+                              "Core Entities": "Entities",
+                              "API Design": "API",
+                            };
+                            const label = abbrev[stepLabel] || stepLabel;
+                            if (!info) {
+                              return (
+                                <div
+                                  key={stepLabel}
+                                  className="flex items-center gap-1.5 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-400"
+                                >
+                                  <span>{label}</span>
+                                  <span>—</span>
+                                </div>
+                              );
+                            }
+                            const score = info.latestScore;
+                            return (
+                              <div
+                                key={stepLabel}
+                                className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs"
+                              >
+                                <span className="text-gray-700 font-medium">{label}</span>
+                                <span
+                                  className={`rounded px-1.5 py-0.5 font-semibold ${SCORE_BG[score]}`}
+                                >
+                                  {score}/4
+                                </span>
+                                {info.attempts > 1 && (
+                                  <span className="text-gray-400">
+                                    ({info.attempts})
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Feed View */}
+      {viewMode === "feed" && (filtered.length === 0 ? (
         <div className="rounded-lg border border-gray-200 p-8 text-center text-sm text-gray-500">
           No submissions yet. Waiting for students...
         </div>
@@ -409,7 +554,7 @@ export default function LiveFeed() {
             );
           })}
         </div>
-      )}
+      ))}
     </div>
   );
 }
