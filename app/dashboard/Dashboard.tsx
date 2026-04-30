@@ -112,7 +112,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Progress bar */}
+              {/* Progress + step details grouped by phase */}
               <div className="mt-4">
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>
@@ -127,40 +127,35 @@ export default function Dashboard() {
                     </span>
                   )}
                 </div>
-                <div className="mt-1 flex gap-4">
-                  {PHASES.map((phase) => (
-                    <div key={phase.id} className="flex gap-1" style={{ flex: phase.steps.length }}>
-                      {phase.steps.map((step) => {
-                        const sub = stepMap[step];
-                        const feedback = sub ? parseFeedback(sub.feedback) : null;
-                        const score = feedback
-                          ? Math.max(1, Math.min(4, Math.round(feedback.score)))
-                          : null;
-                        return (
-                          <div
-                            key={step}
-                            className={`h-2 flex-1 rounded-full ${
-                              score
-                                ? score >= 3
-                                  ? "bg-green-400"
-                                  : score >= 2
-                                    ? "bg-orange-400"
-                                    : "bg-red-400"
-                                : "bg-gray-200"
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* Step details grouped by phase */}
               {hasStarted && (
-                <div className="mt-4 flex gap-4">
+                <div className="mt-2 flex gap-4">
                   {PHASES.map((phase) => (
                     <div key={phase.id} className="rounded-lg border border-gray-200 bg-gray-50/50 p-2.5" style={{ flex: phase.steps.length }}>
+                      <div className="mb-2 flex gap-1">
+                        {phase.steps.map((step) => {
+                          const sub = stepMap[step];
+                          const feedback = sub ? parseFeedback(sub.feedback) : null;
+                          const score = feedback
+                            ? Math.max(1, Math.min(4, Math.round(feedback.score)))
+                            : null;
+                          return (
+                            <div
+                              key={step}
+                              className={`h-2 flex-1 rounded-full ${
+                                score
+                                  ? score >= 3
+                                    ? "bg-green-400"
+                                    : score >= 2
+                                      ? "bg-orange-400"
+                                      : "bg-red-400"
+                                  : "bg-gray-200"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
                       <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
                         {phase.label}
                       </div>
