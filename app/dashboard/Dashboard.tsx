@@ -75,8 +75,11 @@ export default function Dashboard() {
       {problems.map((problem) => {
         const stepMap = latestByProblemStep[problem.id] || {};
         const completedSteps = STEP_ORDER.filter((s) => stepMap[s]);
-        const totalSteps = STEP_ORDER.length;
         const hasStarted = completedSteps.length > 0;
+        const completedPhases = PHASES.filter((p) =>
+          p.steps.every((s) => stepMap[s])
+        ).length;
+        const totalPhases = PHASES.length;
 
         return (
           <div
@@ -116,12 +119,12 @@ export default function Dashboard() {
               <div className="mt-4">
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>
-                    {completedSteps.length}/{totalSteps} steps completed
+                    {completedPhases}/{totalPhases} phases completed
                   </span>
                   {hasStarted && (
                     <span>
                       {Math.round(
-                        (completedSteps.length / totalSteps) * 100
+                        (completedPhases / totalPhases) * 100
                       )}
                       %
                     </span>
