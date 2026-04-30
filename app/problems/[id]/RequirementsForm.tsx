@@ -482,7 +482,10 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
           </button>
           {tipsOpen && (
             <ul className="list-disc space-y-2 px-3 pb-3 pl-7 text-xs text-gray-700">
-              {problem.tips.map((t) => (
+              {(activeStep !== "done" && problem.coachingNotes?.[activeStep]?.tips
+                ? problem.coachingNotes[activeStep]!.tips!
+                : problem.tips
+              ).map((t) => (
                 <li key={t}>{t}</li>
               ))}
             </ul>

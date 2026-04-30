@@ -152,54 +152,59 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Step details */}
+              {/* Step details grouped by phase */}
               {hasStarted && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-5 gap-2">
-                    {PHASES.map((phase) =>
-                      phase.steps.map((step) => {
-                        const sub = stepMap[step];
-                        const feedback = sub
-                          ? parseFeedback(sub.feedback)
-                          : null;
-                        const score = feedback
-                          ? Math.max(
-                              1,
-                              Math.min(4, Math.round(feedback.score))
-                            )
-                          : null;
-                        const key = `${problem.id}-${step}`;
-                        const isExpanded = expandedKey === key;
+                <div className="mt-4 flex gap-4">
+                  {PHASES.map((phase) => (
+                    <div key={phase.id} className="flex-1">
+                      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        {phase.label}
+                      </div>
+                      <div className={`grid gap-2 ${phase.steps.length === 3 ? "grid-cols-3" : ""}`}>
+                        {phase.steps.map((step) => {
+                          const sub = stepMap[step];
+                          const feedback = sub
+                            ? parseFeedback(sub.feedback)
+                            : null;
+                          const score = feedback
+                            ? Math.max(
+                                1,
+                                Math.min(4, Math.round(feedback.score))
+                              )
+                            : null;
+                          const key = `${problem.id}-${step}`;
+                          const isExpanded = expandedKey === key;
 
-                        return (
-                          <button
-                            key={step}
-                            type="button"
-                            onClick={() =>
-                              sub &&
-                              setExpandedKey(isExpanded ? null : key)
-                            }
-                            disabled={!sub}
-                            className={`rounded-lg border p-2 text-center text-xs transition ${
-                              sub
-                                ? `${SCORE_BG[score!]} hover:opacity-80`
-                                : "border-gray-200 bg-gray-50 text-gray-400"
-                            }`}
-                          >
-                            <div className="font-medium">
-                              {STEPS[step].sidebarLabel}
-                            </div>
-                            {score && (
-                              <div className="mt-0.5 font-semibold">
-                                {score}/4
+                          return (
+                            <button
+                              key={step}
+                              type="button"
+                              onClick={() =>
+                                sub &&
+                                setExpandedKey(isExpanded ? null : key)
+                              }
+                              disabled={!sub}
+                              className={`rounded-lg border p-2 text-center text-xs transition ${
+                                sub
+                                  ? `${SCORE_BG[score!]} hover:opacity-80`
+                                  : "border-gray-200 bg-gray-50 text-gray-400"
+                              }`}
+                            >
+                              <div className="font-medium">
+                                {STEPS[step].sidebarLabel}
                               </div>
-                            )}
-                            {!sub && <div className="mt-0.5">—</div>}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
+                              {score && (
+                                <div className="mt-0.5 font-semibold">
+                                  {score}/4
+                                </div>
+                              )}
+                              {!sub && <div className="mt-0.5">—</div>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

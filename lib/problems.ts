@@ -7,6 +7,8 @@ export type StepNotes = {
   signals: string[];
   /** A sample answer the student can view after submitting */
   sampleAnswer: string;
+  /** Step-specific tips shown in the sidebar */
+  tips?: string[];
 };
 
 export type Problem = {
@@ -50,6 +52,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Core Requirements:\n1. Users should be able to submit a long URL and receive a shortened version.\n   - Optionally, users should be able to specify a custom alias for their shortened URL (ie. \"www.short.ly/my-custom-alias\")\n   - Optionally, users should be able to specify an expiration date for their shortened URL.\n2. Users should be able to access the original URL by using the shortened URL.\n\nBelow the line (out of scope):\n- User authentication and account management.\n- Analytics on link clicks (e.g., click counts, geographic data).",
+        tips: [
+          "Think about both sides of the service — creating short URLs and using them.",
+          "Keep it focused: 2-3 core requirements, not a feature wish list.",
+          "Consider what's clearly out of scope and call it out.",
+        ],
       },
       "1B": {
         referencePoints: [
@@ -64,6 +71,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "How many daily active users should we support, and how many total shortened URLs do we expect to store?",
+        tips: [
+          "Ask something specific and measurable — not 'how big is it?'",
+          "What single number would most change how you architect this system?",
+          "Think about what drives infrastructure decisions: users, stored items, or throughput?",
+        ],
       },
       "1C": {
         referencePoints: [
@@ -84,6 +96,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "1. The system should ensure uniqueness for short codes — each short code maps to exactly one long URL.\n2. Redirection should occur with minimal delay (< 100ms).\n3. The system should be reliable and available 99.99% of the time (availability > consistency).\n4. The system is heavily read-dominant — users access shortened URLs far more often than they create new ones. This should drive decisions around caching and read optimization.",
+        tips: [
+          "Do users create short URLs more often, or access them more often? That ratio matters.",
+          "Put specific numbers on your constraints — 'low latency' alone isn't enough.",
+          "Availability vs. consistency: which matters more for a URL shortener?",
+        ],
       },
       "2": {
         referencePoints: [
@@ -102,6 +119,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Original URL\n- url\n\nShort URL\n- short_code\n- original_url\n\nUser\n- id",
+        tips: [
+          "Read through your functional requirements — what 'things' does the system need to store?",
+          "Keep it simple: entity names and a few key attributes. Save detailed schemas for later.",
+          "Only add entities that support in-scope requirements.",
+        ],
       },
       "3": {
         referencePoints: [
@@ -122,6 +144,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "// Shorten a URL\nPOST /urls\n{\n  \"long_url\": \"https://www.example.com/some/very/long/url\"\n}\n→ { \"short_url\": \"http://short.ly/abc123\" }\n\n// Redirect to Original URL\nGET /{short_code}\n→ HTTP 302 Redirect to the original long URL\n\nNotes: Use 302 (not 301) so we maintain control over link updates. User identity comes from the auth token, not the request body.",
+        tips: [
+          "Go through each functional requirement and design an endpoint for it.",
+          "Think about which HTTP verb fits each operation (GET, POST, PUT, PATCH, DELETE).",
+          "The redirect endpoint is unique — what status code should it return, and why?",
+        ],
       },
     },
   },
@@ -164,6 +191,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Core Requirements:\n1. Users should be able to create posts.\n2. Users should be able to follow other users.\n3. Users should be able to view a feed of posts from people they follow, in reverse chronological order (newest first).\n4. Users should be able to page through their feed.\n\nBelow the line (out of scope):\n- Like and comment on posts.\n- Private or restricted visibility posts.\n- Direct messaging.",
+        tips: [
+          "Think about both creating content and consuming it — what are the core user actions?",
+          "Is following mutual (like Facebook friends) or one-way (like Twitter)?",
+          "How does a user browse their feed? What order are posts in, and what if there are thousands?",
+        ],
       },
       "1B": {
         referencePoints: [
@@ -180,6 +212,10 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "How many total users should we support, and what's the expected read-to-write ratio for posts?",
+        tips: [
+          "Do people post more often, or scroll their feed more often? That ratio shapes everything.",
+          "Think about what number would most change your architecture.",
+        ],
       },
       "1C": {
         referencePoints: [
@@ -202,6 +238,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "1. The system should be highly available (availability over consistency).\n2. Eventual consistency is acceptable — posts visible in feeds within 1 minute.\n3. Posting and viewing the feed should be fast (< 500ms).\n4. The system should handle 2B users.\n5. Users can follow unlimited people and be followed by unlimited users — this creates a fan-out challenge, especially for celebrity accounts.\n6. The read-to-write ratio is ~100:1 — we should optimize heavily for reads.",
+        tips: [
+          "Does a new post need to appear in every follower's feed instantly, or is a short delay OK?",
+          "What matters more for a social feed — always available or always consistent?",
+          "Think about what the read-to-write ratio tells you about where to optimize.",
+        ],
       },
       "2": {
         referencePoints: [
@@ -222,6 +263,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "User\n- id\n\nFollow\n- follower_id\n- followee_id\n\nPost\n- id\n- author_id\n- content",
+        tips: [
+          "Look at each functional requirement — what 'nouns' does it involve?",
+          "How do you represent a follow relationship? Is it its own entity?",
+          "Keep it simple: entity names and key attributes. Save detailed schemas for later.",
+        ],
       },
       "3": {
         referencePoints: [
@@ -244,6 +290,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "// Create a post\nPOST /posts\n{ \"content\": \"...\" }\n→ { \"postId\": \"...\" }\n\n// Follow a user (idempotent)\nPUT /users/:id/follow\n→ 200 OK\n\n// Unfollow (out of scope but noting for completeness)\nDELETE /users/:id/follow\n→ 200 OK\n\n// View feed with cursor-based pagination\nGET /feed?pageSize={size}&cursor={timestamp}\n→ { items: Post[], nextCursor: string }\n\nNotes: Use cursor-based pagination (timestamp cursor) so each page returns posts older than the cursor. Auth via JWT in header. PUT for follow because it's idempotent — clicking follow twice doesn't create duplicate records.",
+        tips: [
+          "Go through each functional requirement and design an endpoint for it.",
+          "The feed could have millions of posts — how does the client paginate through them?",
+          "Is following idempotent? That should influence your choice of HTTP verb.",
+        ],
       },
     },
   },
@@ -285,6 +336,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Core Requirements:\n1. Users should be able to start group chats with multiple participants (limit 100).\n2. Users should be able to send/receive messages.\n3. Users should be able to receive messages sent while they are not online (up to 30 days).\n4. Users should be able to send/receive media in their messages.\n\nBelow the line (out of scope):\n- Audio/video calling.\n- Interactions with businesses.\n- Registration and profile management.",
+        tips: [
+          "Think beyond sending — what happens when someone is offline for days?",
+          "Is this 1:1 only, or can users chat in groups? What are the limits?",
+          "Do messages include just text, or other types of content too?",
+        ],
       },
       "1B": {
         referencePoints: [
@@ -301,6 +357,10 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "How many total users should we support, and how many do we expect to be connected simultaneously?",
+        tips: [
+          "Total users and concurrent users are very different numbers — which matters more here?",
+          "Real-time messaging requires persistent connections. How many of those at once?",
+        ],
       },
       "1C": {
         referencePoints: [
@@ -322,6 +382,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "1. Messages should be delivered to available users with low latency (< 500ms).\n2. We should guarantee deliverability of messages — they should eventually reach the recipient.\n3. The system should handle billions of users with high throughput (~40K messages/sec).\n4. Messages should be stored on centralized servers no longer than necessary.\n5. The system should be resilient against failures of individual components.",
+        tips: [
+          "What guarantees do users expect? 'Delivered' is different from 'sent'.",
+          "Think about privacy — how long should servers keep messages?",
+          "What happens when a server goes down mid-conversation?",
+        ],
       },
       "2": {
         referencePoints: [
@@ -342,6 +407,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "User\n- id\n\nChat\n- id\n- participants\n\nMessage\n- id\n- chat_id\n- sender_id\n- content\n\nClient\n- id\n- user_id",
+        tips: [
+          "Can a single user be logged in on multiple devices at once? Does that need its own entity?",
+          "What's the difference between a 'chat' and a 'message'? Both are important.",
+          "Keep it simple — entity names and key attributes only.",
+        ],
       },
       "3": {
         referencePoints: [
@@ -365,6 +435,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "// WebSocket-based API (bidirectional commands)\n\n// Client → Server:\ncreateChat: { participants[], name } → { chatId }\nsendMessage: { chatId, message, attachments } → { status: SUCCESS|FAILURE, messageId }\ncreateAttachment: { body, hash } → { attachmentId }\nmodifyChatParticipants: { chatId, userId, operation: ADD|REMOVE } → { status }\n\n// Server → Client:\nchatUpdate: { chatId, participants[] } → client sends ack\nnewMessage: { chatId, userId, message, attachments } → client sends ack\n\nNotes: Use WebSockets (over TLS) for real-time bidirectional communication. Client acknowledgement (ack) is crucial for guaranteeing delivery — if no ack is received, the message stays in the user's inbox for later delivery.",
+        tips: [
+          "Is REST the right fit for real-time messaging? Think about who initiates communication.",
+          "Messages flow both ways — the server needs to push to the client too.",
+          "How does the server know a message was actually received?",
+        ],
       },
     },
   },
@@ -407,6 +482,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Core Requirements:\n1. Riders should be able to input a start location and destination and get a fare estimate.\n2. Riders should be able to request a ride based on the estimated fare.\n3. Upon request, riders should be matched with a nearby, available driver.\n4. Drivers should be able to accept/decline a request and navigate to pickup/drop-off.\n\nBelow the line (out of scope):\n- Rating rides and drivers post-trip.\n- Scheduling rides in advance.\n- Different ride categories (X, XL, Comfort).",
+        tips: [
+          "Think about the full ride flow — what steps happen before a rider gets in the car?",
+          "There are two types of users here. What does each one need to do?",
+          "Does the rider commit to a ride before seeing a price, or after?",
+        ],
       },
       "1B": {
         referencePoints: [
@@ -423,6 +503,10 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "How many active drivers and concurrent ride requests should we expect during peak hours, and how often do drivers send location updates?",
+        tips: [
+          "What drives the matching system's load — total users or concurrent requests?",
+          "Think about peak scenarios: a concert lets out and 100K people need rides.",
+        ],
       },
       "1C": {
         referencePoints: [
@@ -444,6 +528,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "1. Low latency ride matching — match should complete in under 1 minute or fail gracefully.\n2. Strong consistency — a driver must only be matched to one rider at a time (no double-booking). This is one of the rare cases where consistency matters more than availability.\n3. High throughput during peaks — handle 100K+ requests from the same location during events.\n4. System should be resilient with redundancy and failover mechanisms.",
+        tips: [
+          "What happens if two riders request the same driver at the same instant?",
+          "Most systems choose availability over consistency. Is that right here?",
+          "How fast does matching need to be before the rider gives up?",
+        ],
       },
       "2": {
         referencePoints: [
@@ -466,6 +555,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "Rider\n- id\n\nDriver\n- id\n- vehicle_info\n- availability_status\n\nFare\n- id\n- pickup_location\n- destination\n- estimated_fare\n\nRide\n- id\n- rider_id\n- driver_id\n- fare_id\n- status\n\nLocation\n- driver_id\n- lat\n- lng",
+        tips: [
+          "Is a fare estimate the same thing as a completed ride? Think about the lifecycle.",
+          "Riders and drivers have very different attributes — are they the same entity?",
+          "Driver locations update every few seconds. Does that need its own entity?",
+        ],
       },
       "3": {
         referencePoints: [
@@ -489,6 +583,11 @@ export const problems: Problem[] = [
         ],
         sampleAnswer:
           "// Get fare estimate\nPOST /fare\n{ pickupLocation, destination }\n→ Fare { fareId, estimatedFare, ETA }\n\n// Request a ride\nPOST /rides\n{ fareId }\n→ Ride { rideId, status: \"matching\" }\n\n// Update driver location (called every few seconds by driver app)\nPOST /drivers/location\n{ lat, lng }\n→ Success/Error\n\n// Driver accepts or declines a ride\nPATCH /rides/:rideId\n{ action: \"accept\" | \"deny\" }\n→ Ride { rideId, status, pickupLocation, destination }\n\nNotes: Matching happens server-side after POST /rides — no explicit match endpoint needed. Driver identity comes from session/JWT, not request body. Location updates are high-frequency, so this endpoint must be optimized for throughput.",
+        tips: [
+          "The fare estimate and ride request are two separate steps — does that mean two endpoints?",
+          "Drivers send location updates every few seconds. That's an endpoint too.",
+          "Does matching need its own endpoint, or does it happen behind the scenes?",
+        ],
       },
     },
   },
