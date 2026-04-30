@@ -133,6 +133,9 @@ export default function Dashboard() {
                 <div className="mt-2 flex gap-4">
                   {PHASES.map((phase) => (
                     <div key={phase.id} className="rounded-lg border border-gray-200 bg-gray-50/50 p-2.5" style={{ flex: phase.steps.length }}>
+                      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        {phase.label}
+                      </div>
                       <div className="mb-2 flex gap-1">
                         {phase.steps.map((step) => {
                           const sub = stepMap[step];
@@ -155,9 +158,6 @@ export default function Dashboard() {
                             />
                           );
                         })}
-                      </div>
-                      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                        {phase.label}
                       </div>
                       <div className={`grid gap-2 ${phase.steps.length === 3 ? "grid-cols-3" : ""}`}>
                         {phase.steps.map((step) => {
