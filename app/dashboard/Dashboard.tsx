@@ -127,28 +127,32 @@ export default function Dashboard() {
                     </span>
                   )}
                 </div>
-                <div className="mt-1 flex gap-1">
-                  {STEP_ORDER.map((step) => {
-                    const sub = stepMap[step];
-                    const feedback = sub ? parseFeedback(sub.feedback) : null;
-                    const score = feedback
-                      ? Math.max(1, Math.min(4, Math.round(feedback.score)))
-                      : null;
-                    return (
-                      <div
-                        key={step}
-                        className={`h-2 flex-1 rounded-full ${
-                          score
-                            ? score >= 3
-                              ? "bg-green-400"
-                              : score >= 2
-                                ? "bg-orange-400"
-                                : "bg-red-400"
-                            : "bg-gray-200"
-                        }`}
-                      />
-                    );
-                  })}
+                <div className="mt-1 flex gap-4">
+                  {PHASES.map((phase) => (
+                    <div key={phase.id} className="flex gap-1" style={{ flex: phase.steps.length }}>
+                      {phase.steps.map((step) => {
+                        const sub = stepMap[step];
+                        const feedback = sub ? parseFeedback(sub.feedback) : null;
+                        const score = feedback
+                          ? Math.max(1, Math.min(4, Math.round(feedback.score)))
+                          : null;
+                        return (
+                          <div
+                            key={step}
+                            className={`h-2 flex-1 rounded-full ${
+                              score
+                                ? score >= 3
+                                  ? "bg-green-400"
+                                  : score >= 2
+                                    ? "bg-orange-400"
+                                    : "bg-red-400"
+                                : "bg-gray-200"
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
               </div>
 
