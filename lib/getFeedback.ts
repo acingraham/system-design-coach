@@ -16,7 +16,8 @@ export async function getFeedback(
   constraints: string[] | null,
   studentName: string,
   attemptId: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  functionalRequirements?: string | null
 ): Promise<StructuredFeedback> {
   try {
     const res = await fetch("/api/feedback", {
@@ -31,6 +32,7 @@ export async function getFeedback(
         constraints,
         studentName,
         attemptId,
+        functionalRequirements,
       }),
       signal,
     });

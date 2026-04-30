@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       constraints,
       studentName,
       attemptId,
+      functionalRequirements,
     } = await request.json();
 
     const stepInstruction = STEP_INSTRUCTIONS[step];
@@ -62,6 +63,10 @@ export async function POST(request: NextRequest) {
 
     const constraintsContext = constraints?.length
       ? `\nSystem constraints (already revealed to student):\n${constraints.map((c: string) => `• ${c}`).join("\n")}`
+      : "";
+
+    const frContext = (step === "2" || step === "3") && functionalRequirements
+      ? `\nFunctional requirements the student is working from:\n${functionalRequirements}\n\nThe student's ${step === "2" ? "core entities" : "API design"} should support these functional requirements.`
       : "";
 
     // Build coaching context from problem-specific notes
@@ -143,7 +148,7 @@ Rules:
         {
           role: "user",
           content: `Problem: ${problemTitle}
-${problemDescription}${constraintsContext}
+${problemDescription}${constraintsContext}${frContext}
 
 Step: ${stepInstruction}${coachingContext}${previousAttemptContext}
 

@@ -80,6 +80,10 @@ export default function FocusedPractice({
   const currentValue = current ? answers[current.field] : "";
   const showTextarea = !!current && (!currentValue || isEditing);
 
+  // Resolved functional requirements: student's answer if they've done step 1A, else sample answer
+  const resolvedFR =
+    answers.functional || problem.coachingNotes?.["1A"]?.sampleAnswer || "";
+
   const isStepAnswered = (s: Step) => {
     if (s === "done") return false;
     if (s === "1B") return answers.scaleAnswer !== "";
@@ -149,7 +153,8 @@ export default function FocusedPractice({
         showConstraintsUpfront || answers.scaleAnswer
           ? problem.constraints
           : null;
-      const result = await getFeedback(stepKey, value, problem, constraintsToSend, studentName, attemptId, controller.signal);
+      const frToSend = (stepKey === "2" || stepKey === "3") ? resolvedFR : null;
+      const result = await getFeedback(stepKey, value, problem, constraintsToSend, studentName, attemptId, controller.signal, frToSend);
       setFeedback((prev) => ({ ...prev, [stepKey]: result }));
     } catch {
       // Aborted — do nothing
@@ -246,6 +251,19 @@ export default function FocusedPractice({
         <section>
           <h2 className="text-xl font-semibold">{headingText}</h2>
           <p className="mt-1 mb-5 text-sm text-gray-600">{current.prompt}</p>
+
+          {(activeStep === "2" || activeStep === "3") && resolvedFR && (
+            <div className="mb-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                {answers.functional
+                  ? "Your Functional Requirements"
+                  : "Functional Requirements"}
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-indigo-900">
+                {resolvedFR}
+              </p>
+            </div>
+          )}
 
           {showTextarea ? (
             <form onSubmit={handleSubmit} className="space-y-3">

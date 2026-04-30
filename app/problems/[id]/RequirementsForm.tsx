@@ -80,6 +80,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
     Partial<Record<Exclude<Step, "done">, StructuredFeedback>>
   >({});
   const [draft, setDraft] = useState("");
+  const savedDrafts = useRef<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -125,6 +126,10 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
 
   const current = activeStep === "done" ? null : STEPS[activeStep];
   const currentValue = current ? answers[current.field] : "";
+
+  // Resolved functional requirements: student's answer if they've done step 1A, else sample answer
+  const resolvedFR =
+    answers.functional || problem.coachingNotes?.["1A"]?.sampleAnswer || "";
   const showTextarea = !!current && (!currentValue || isEditing);
 
   const isStepAnswered = (s: Step) => {
@@ -151,9 +156,13 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
       : "";
 
   function selectStep(step: Step) {
+    // Persist current draft before switching
+    if (activeStep !== "done" && draft) {
+      savedDrafts.current[activeStep] = draft;
+    }
     setActiveStep(step);
     setIsEditing(false);
-    setDraft("");
+    setDraft(step !== "done" ? (savedDrafts.current[step] || "") : "");
     setShowSampleAnswer(false);
   }
 
@@ -187,6 +196,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
         : {}),
     }));
     setDraft("");
+    delete savedDrafts.current[stepKey];
     setIsEditing(false);
 
     if (stepKey === "1B" && !meaningfulScale) {
@@ -207,7 +217,8 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
     setIsLoadingFeedback(true);
     try {
       const constraintsToSend = answers.scaleAnswer ? problem.constraints : null;
-      const result = await getFeedback(stepKey, value, problem, constraintsToSend, studentName, attemptId, controller.signal);
+      const frToSend = (stepKey === "2" || stepKey === "3") ? resolvedFR : null;
+      const result = await getFeedback(stepKey, value, problem, constraintsToSend, studentName, attemptId, controller.signal, frToSend);
       setFeedback((prev) => ({ ...prev, [stepKey]: result }));
     } catch {
       // Aborted — do nothing
@@ -236,6 +247,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
     setAnswers(EMPTY);
     setFeedback({});
     setDraft("");
+    savedDrafts.current = {};
     setIsEditing(false);
     setIsLoadingFeedback(false);
     // Refresh history
@@ -296,6 +308,7 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
     setAnswers(newAnswers);
     setFeedback(newFeedback);
     setDraft("");
+    savedDrafts.current = {};
     setIsEditing(false);
     setShowSampleAnswer(false);
     // Reuse the loaded attempt's ID so continuing or editing stays in the same attempt
@@ -607,6 +620,19 @@ export default function RequirementsForm({ problem }: { problem: Problem }) {
           <section>
             <h2 className="text-xl font-semibold">{headingText}</h2>
             <p className="mt-1 mb-5 text-sm text-gray-600">{current.prompt}</p>
+
+            {(activeStep === "2" || activeStep === "3") && resolvedFR && (
+              <div className="mb-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                  {answers.functional
+                    ? "Your Functional Requirements"
+                    : "Functional Requirements"}
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-indigo-900">
+                  {resolvedFR}
+                </p>
+              </div>
+            )}
 
             {showTextarea ? (
               <form onSubmit={handleSubmit} className="space-y-3">

@@ -61,7 +61,7 @@ export const STEPS: Record<Exclude<Step, "done">, StepConfig> = {
   },
   "2": {
     sidebarLabel: "Core Entities",
-    prompt: "What are the core entities in this system?",
+    prompt: "What are the core entities in this system? Look at the functional requirements above for inspiration.",
     field: "entities",
     next: "3",
     cta: "Continue",
@@ -70,7 +70,7 @@ export const STEPS: Record<Exclude<Step, "done">, StepConfig> = {
   },
   "3": {
     sidebarLabel: "API Design",
-    prompt: "Sketch the API — endpoints, inputs, outputs.",
+    prompt: "Sketch the API — go through each functional requirement above and design endpoints to support it.",
     field: "api",
     next: "done",
     cta: "Finish",
