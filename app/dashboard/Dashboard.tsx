@@ -156,7 +156,7 @@ export default function Dashboard() {
               {hasStarted && (
                 <div className="mt-4 flex gap-4">
                   {PHASES.map((phase) => (
-                    <div key={phase.id} className="flex-1">
+                    <div key={phase.id} style={{ flex: phase.steps.length }}>
                       <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
                         {phase.label}
                       </div>
